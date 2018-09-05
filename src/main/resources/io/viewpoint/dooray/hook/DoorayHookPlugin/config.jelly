@@ -1,0 +1,18 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <f:entry title="${%URL}" field="url">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry title="${%BotName}" field="botName">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry title="${%BotImageUrl}" field="botIconImage">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry title="${%Text}" field="text">
+        <f:textbox />
+    </f:entry>
+</j:jelly>
