@@ -15,4 +15,10 @@
     <f:entry title="${%Text}" field="text">
         <f:textbox />
     </f:entry>
+
+    <f:section title="Attachments">
+        <f:block>
+            <f:repeatableHeteroProperty field="attachments" hasHeader="true"/>
+        </f:block>
+    </f:section>
 </j:jelly>

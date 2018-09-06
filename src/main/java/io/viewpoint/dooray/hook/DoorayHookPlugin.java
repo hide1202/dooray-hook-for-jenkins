@@ -3,9 +3,7 @@ package io.viewpoint.dooray.hook;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.AbstractProject;
-import hudson.model.Run;
-import hudson.model.TaskListener;
+import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import jenkins.tasks.SimpleBuildStep;
@@ -14,6 +12,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
 import javax.annotation.Nonnull;
+import java.util.List;
+import java.util.stream.Collectors;
 
 // TODO if this class writes Kotlin, cannot find Descriptor
 public class DoorayHookPlugin extends Builder implements SimpleBuildStep {
@@ -21,6 +21,7 @@ public class DoorayHookPlugin extends Builder implements SimpleBuildStep {
     private String botName;
     private String text;
     private String botIconImage;
+    private List<Entry> attachments;
 
     @DataBoundConstructor
     public DoorayHookPlugin() {
@@ -63,11 +64,30 @@ public class DoorayHookPlugin extends Builder implements SimpleBuildStep {
         this.botIconImage = botIconImage;
     }
 
+    public List<Entry> getAttachments() {
+        return attachments;
+    }
+
+    @DataBoundSetter
+    public void setAttachments(List<Entry> attachments) {
+        this.attachments = attachments;
+    }
+
     @Override
     public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) {
         HookService hookService = new HookService(listener);
         String botIconImage = StringUtils.isEmpty(this.botIconImage) ? null : this.botIconImage;
-        hookService.hook(url, new Hook(botName, botIconImage, text, null));
+        List<Attachment> attachments = this.attachments.stream().filter(e -> e instanceof AttachmentEntry)
+                .map(e -> (AttachmentEntry) e)
+                .map(at -> {
+                    String title = at.getTitle();
+                    String titleLink = StringUtils.isEmpty(at.getTitleLink()) ? null : at.getTitleLink();
+                    String text = at.getText();
+                    String color = StringUtils.isEmpty(at.getColor()) ? null : at.getColor();
+                    String image = StringUtils.isEmpty(at.getImage()) ? null : at.getImage();
+                    return new Attachment(title, titleLink, text, color, image);
+                }).collect(Collectors.toList());
+        hookService.hook(url, new Hook(botName, botIconImage, text, attachments));
     }
 
     @Override
@@ -88,5 +108,75 @@ public class DoorayHookPlugin extends Builder implements SimpleBuildStep {
             return "Dooray Hook";
         }
     }
+
+
+    public static abstract class Entry extends AbstractDescribableImpl<Entry> {
+    }
+
+    public static final class AttachmentEntry extends Entry {
+        private String title;
+        private String titleLink;
+        private String text;
+        private String color;
+        private String image;
+
+        @DataBoundConstructor
+        public AttachmentEntry() {
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        @DataBoundSetter
+        public void setTitle(String title) {
+            this.title = title;
+        }
+
+        public String getTitleLink() {
+            return titleLink;
+        }
+
+        @DataBoundSetter
+        public void setTitleLink(String titleLink) {
+            this.titleLink = titleLink;
+        }
+
+        public String getText() {
+            return text;
+        }
+
+        @DataBoundSetter
+        public void setText(String text) {
+            this.text = text;
+        }
+
+        public String getColor() {
+            return color;
+        }
+
+        @DataBoundSetter
+        public void setColor(String color) {
+            this.color = color;
+        }
+
+        public String getImage() {
+            return image;
+        }
+
+        @DataBoundSetter
+        public void setImage(String image) {
+            this.image = image;
+        }
+
+        @Extension
+        public static class DescriptorImpl extends Descriptor<Entry> {
+            @Override
+            public String getDisplayName() {
+                return "Attachment";
+            }
+        }
+    }
+
 }
 
